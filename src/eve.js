@@ -42,7 +42,7 @@ function detectFramework() {
     }
   }
 
-  console.error("Eve doesn't support your JavaScript framework.")
+  log("Eve doesn't support your JavaScript framework.", "error")
 
 }
 
@@ -53,8 +53,31 @@ function using(guess) {
   return (guess) ? (_framework == guess.toLowerCase()) : _framework
 }
 
-function dbug(name, message) {
+function slice() {
+  var slice = Array.prototype.slice,
+      arrayLike = arguments[0],
+      args = slice.call(arguments, 1)
+
+  return slice.apply(arrayLike, args)
+}
+
+function log() {
+  var prefix = "",
+      args = slice(arguments),
+      messages = args.slice(0, -1),
+      method = args.slice(-1)[0]
+
+  if (!args.length) { return }
   if (!window.console) { return }
+  if (!window.console[method]) {
+    prefix = "[" + method + "]"
+    method = "log"
+  }
+
+  window.console[method].apply(window.console, messages)
+}
+
+function dbug(name, message) {
   var debug = _debugAll
   if (!_debugAll) {
     debug = false
@@ -65,7 +88,7 @@ function dbug(name, message) {
   if (!debug) { return }
   while (name.length < 10) { name += ' ' }
   name = name.substring(0, 10) + " - "
-  console.info(name, message)
+  log(name, message, "info")
 }
 
 function bindToScope(fun, obj, reg, name) {
@@ -120,7 +143,7 @@ window.Eve = {
 
   scope: function(ns, fun) {
     if (_scopes[ns]) {
-      console.warn("Duplicate namespace: "+ns)
+      log("Duplicate namespace: " + ns, "warn")
     }
     bindToScope(fun, {
       name: ns,
@@ -129,14 +152,14 @@ window.Eve = {
   },
 
   attach: function(moduleName, namespace) {
-    var fun, args = Array.prototype.slice.call(arguments), i = 0
+    var fun, args = slice(arguments), i = 0
     fun = function() { _registry[moduleName].apply(this, args.slice(2)) }
     dbug(moduleName, "attached to " + namespace)
     //We're delegating off the window, so there's no need to reattach for
     //multiple instances of a single given module.
     if (_attachments[moduleName+namespace]) { return false }
     if (!_registry[moduleName]) {
-      console.warn("Module not found: "+moduleName)
+      log("Module not found: " + moduleName, "warn")
       return false
     }
     var mod = bindToScope(fun, {
