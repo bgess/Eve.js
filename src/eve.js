@@ -32,7 +32,7 @@ var _registry = {}, _scopes = {}, _attachments = {}, _extensions = {},
 //Detects the current JavaScript framework.
 function detectFramework() {
 
-  if (_framework) return _framework
+  if (_framework) { return _framework }
 
   var fws = ['jQuery', 'MooTools', 'YUI', 'Prototype', 'dojo']
   for (var i = 0; i<= fws.length; i++) {
@@ -40,7 +40,9 @@ function detectFramework() {
       Eve.setFramework(fws[i])
       return fws[i]
     }
-  } console.error("Eve doesn't support your JavaScript framework.")
+  }
+
+  console.error("Eve doesn't support your JavaScript framework.")
 
 }
 
@@ -52,33 +54,33 @@ function using(guess) {
 }
 
 function dbug(name, message) {
-    if (!window.console) { return; }
-    var debug = _debugAll
-    if (!_debugAll) {
-      debug = false
-      for (var i = 0; i<_debugging.length; i++) {
-        if (_debugging[i]==name) debug = true
-      }
+  if (!window.console) { return }
+  var debug = _debugAll
+  if (!_debugAll) {
+    debug = false
+    for (var i = 0; i < _debugging.length; i++) {
+      if (_debugging[i] == name) { debug = true }
     }
-    if (!debug) { return; }
-    while (name.length<10) { name=name+' '; }
-    name = name.substring(0, 10)+" - "
-    console.info(name, message)
+  }
+  if (!debug) { return }
+  while (name.length < 10) { name += ' ' }
+  name = name.substring(0, 10) + " - "
+  console.info(name, message)
 }
 
 function bindToScope(fun, obj, reg, name) {
-  
-  for (var k in Scope) obj[k] = Scope[k]
-  for (k in _extensions) obj[k] = _extensions[k]
-  
+
+  for (var k in Scope) { obj[k] = Scope[k] }
+  for (k in _extensions) { obj[k] = _extensions[k] }
+
   if (using("YUI")) {
     YUI().use('node', function(Y) {
-      _dom  = Y.one
+      _dom = Y.one
       reg[name] = fun.apply(obj)
     })
   } else if (using("dojo")) {
     require(["dojo/NodeList-dom", "dojo/NodeList-traverse"], function(dom){
-      _dom  = dom
+      _dom = dom
       reg[name] = fun.apply(obj)
     })
   } else {
@@ -89,10 +91,10 @@ function bindToScope(fun, obj, reg, name) {
 
 //The primary Eve API.
 window.Eve = {
-  
+
   setFramework: function(fw) {
-    _framework = (fw+"").toLowerCase()
-    if (_framework=='jquery') $ = jQuery; //No-conflict compat.
+    _framework = (fw + "").toLowerCase()
+    if (_framework == 'jquery') $ = jQuery; //No-conflict compat.
   },
 
   debug: function(moduleName) {
@@ -127,15 +129,12 @@ window.Eve = {
   },
 
   attach: function(moduleName, namespace) {
-    var fun, args = [], i=0
-    for (i;i<arguments.length;i++) args[args.length] = arguments[i]
-    fun = function() { _registry[moduleName].apply(this, args.slice(2)); }
-    dbug(moduleName, "attached to "+namespace)
+    var fun, args = Array.prototype.slice.call(arguments), i = 0
+    fun = function() { _registry[moduleName].apply(this, args.slice(2)) }
+    dbug(moduleName, "attached to " + namespace)
     //We're delegating off the window, so there's no need to reattach for
     //multiple instances of a single given module.
-    if (_attachments[moduleName+namespace]) {
-      return false
-    }
+    if (_attachments[moduleName+namespace]) { return false }
     if (!_registry[moduleName]) {
       console.warn("Module not found: "+moduleName)
       return false
@@ -150,9 +149,9 @@ window.Eve = {
 }
 
 var Scope = {
-  
+
   listen: function(selector, event, handler) {
-    
+
     //There's a special hell for putting optional parameters at the
     //beginning.  A special and awesome hell.
     if (!handler) {
@@ -167,15 +166,15 @@ var Scope = {
     var scope = (this.event) ? this.find() : document.body
 
     var name = this.name,
-      sel   = (this.namespace+' '+selector).trim(),
-      obj  = { }
-      for (var k in this) if (this.hasOwnProperty(k))  obj[k] = this[k]
+      sel = (this.namespace + ' '+selector).trim(),
+      obj = { }
+      for (var k in this) if (this.hasOwnProperty(k)) { obj[k] = this[k] }
       function fun(e,t) {
         dbug(name, sel+':'+event)
         obj.event = e
-        if (using("MooTools")) { e.target = t; }
-        if (using("jQuery"))   { e.target = e.currentTarget; }
-        if (using("dojo"))     { e.target = e.explicitOriginalTarget; }
+        if (using("MooTools")) { e.target = t }
+        if (using("jQuery"))   { e.target = e.currentTarget }
+        if (using("dojo"))     { e.target = e.explicitOriginalTarget }
         handler.apply(obj, arguments)
       }
 
@@ -197,15 +196,15 @@ var Scope = {
     }
 
   },
-  
+
   find: function(sel) {
     var scope, ns = this.namespace
-    if (!sel || typeof(sel)=='string') { sel = (sel || '').trim(); }
+    if (!sel || typeof(sel)=='string') { sel = (sel || '').trim() }
     //Scope to the particular instance of the DOM module active in this
     //event.
     var t  = (this.event) ? this.event.target : document.body
-    if (using('jQuery')) t = jQuery(t)
-    if (_dom) t = _dom(t)
+    if (using('jQuery')) { t = jQuery(t) }
+    if (_dom) { t = _dom(t) }
     var map = {
       jQuery: ['is', 'parents', 'find'],
       MooTools: ['match', 'getParent', 'getElements'],
@@ -216,25 +215,25 @@ var Scope = {
     for (var fw in map) {
       if (!using(fw)) continue
       var m = map[fw], match = m[0], up = m[1], all = m[2]
-      if (!using('dojo')&&t[match](ns)) return t
+      if (!using('dojo')&&t[match](ns)) { return t }
       scope  = (this.event) ? t[up](ns) : t
       return (this.event) ? scope[all](sel) : scope[all](ns+' '+sel)
     }
   },
   
   first: function(sel,result) {
-    result = (arguments.length==2) ? result : this.find(sel)
-    if (using('YUI')) result = result.getDOMNodes()
+    result = (arguments.length == 2) ? result : this.find(sel)
+    if (using('YUI')) { result = result.getDOMNodes() }
     return result[0]
   },
 
   //Yo dawg...
   scope: function(ns, fun) {
-    Eve.scope(this.namespace+' '+ns, fun)
+    Eve.scope(this.namespace + ' ' + ns, fun)
   },
 
   attach: function(moduleName, ns) {
-    Eve.attach(moduleName, this.namespace+' '+(ns||''))
+    Eve.attach(moduleName, this.namespace + ' ' + (ns || ''))
   }
   
 }
