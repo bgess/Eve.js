@@ -4,11 +4,7 @@
 	var frameworks = {
 		eve       : "../src/eve.js",
 		'eve.min' : "../eve.min.js",
-		mootools  : "http://ajax.googleapis.com/ajax/libs/mootools/1.4.5/mootools-yui-compressed.js",
-		jquery	  : "http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js",
-		dojo	  : "http://ajax.googleapis.com/ajax/libs/dojo/1.8.0/dojo/dojo.js",
-		yui		  : "http://yui.yahooapis.com/3.6.0/build/yui/yui-min.js",
-		prototype : "http://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js"
+		jquery	  : "http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js",
 	};
 	
 	//Grab the query parameters.
