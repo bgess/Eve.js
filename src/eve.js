@@ -25,33 +25,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 (function() {
-
-var _registry = {}, _scopes = {}, _attachments = {}, _extensions = {},
-    _debugging = [], _debugAll = false, _framework, _dom
-
-//Detects the current JavaScript framework.
-function detectFramework() {
-
-  if (_framework) { return _framework }
-
-  var fws = ['jQuery', 'MooTools', 'YUI', 'Prototype', 'dojo']
-  for (var i = 0; i<= fws.length; i++) {
-    if (window[fws[i]]) {
-      Eve.setFramework(fws[i])
-      return fws[i]
-    }
-  }
-
-  log("Eve doesn't support your JavaScript framework.", "error")
-
-}
-
-//Either matches the chosen JS framework to the passed guess, or returns the
-//current framework.
-function using(guess) {
-  var fw = _framework || detectFramework()
-  return (guess) ? (_framework == guess.toLowerCase()) : _framework
-}
+var _debugging = [], _debugAll = false, Eve
 
 function slice() {
   var slice = Array.prototype.slice,
@@ -65,16 +39,17 @@ function log() {
   var prefix = "",
       args = slice(arguments),
       messages = args.slice(0, -1),
-      method = args.slice(-1)[0]
+      method = args.slice(-1)[0];
+      console = window.console
 
   if (!args.length) { return }
-  if (!window.console) { return }
-  if (!window.console[method]) {
+  if (!console) { return }
+  if (!console[method]) {
     prefix = "[" + method + "]"
     method = "log"
   }
 
-  window.console[method].apply(window.console, messages)
+  console[method].apply(console, messages)
 }
 
 function dbug(name, message) {
@@ -91,174 +66,135 @@ function dbug(name, message) {
   log(name, message, "info")
 }
 
+function buildScope(obj) {
+  var ns = obj.namespace
+  return $.extend($(ns), obj, Eve._extensions)
+}
+
 function bindToScope(fun, obj, reg, name) {
-
-  for (var k in Scope) { obj[k] = Scope[k] }
-  for (k in _extensions) { obj[k] = _extensions[k] }
-
-  if (using("YUI")) {
-    YUI().use('node', function(Y) {
-      _dom = Y.one
-      reg[name] = fun.apply(obj)
-    })
-  } else if (using("dojo")) {
-    require(["dojo/NodeList-dom", "dojo/NodeList-traverse"], function(dom){
-      _dom = dom
-      reg[name] = fun.apply(obj)
-    })
-  } else {
-    reg[name] = fun.apply(obj)
-  }
-
+  reg[name] = fun.apply(buildScope(obj))
 }
 
 //The primary Eve API.
-window.Eve = {
-
-  setFramework: function(fw) {
-    _framework = (fw + "").toLowerCase()
-    if (_framework == 'jquery') $ = jQuery; //No-conflict compat.
-  },
-
+window.Eve = Eve = {
   debug: function(moduleName) {
     if (moduleName) {
       _debugging.push(moduleName)
     } else {
       _debugAll = true
     }
-  },
-
-  register: function(name, obj) {
-    dbug(name, "registered")
-    if (_registry[name]) {
-      throw new Error("Module already exists: "+name)
-    }
-    _registry[name] = obj
     return this
   },
-  
-  extend: function(key, fun) {
-    _extensions[key] = fun
+
+  undebug: function(moduleName) {
+    var nameIndex
+    if (moduleName) {
+      nameIndex = _debugging.indexOf(moduleName)
+      if (!!~nameIndex) { _debugging.splice(nameIndex, 1) }
+    } else {
+      _debugAll = false
+    }
+    return this
   },
 
+  _extensions: {},
+  extend: function(key, fun) {
+    var k, hasOwn = Object.prototype.hasOwnProperty
+    if (Object(key) === key) {
+      for (k in key) if (hasOwn.call(key, k)) {
+        Eve.extend(k, key[k])
+      }
+    } else {
+      this._extensions[key] = fun
+    }
+    return this
+  },
+
+  _scopes: {},
   scope: function(ns, fun) {
-    if (_scopes[ns]) {
+    if (this._scopes[ns]) {
       log("Duplicate namespace: " + ns, "warn")
     }
+
     bindToScope(fun, {
       name: ns,
       namespace: ns
-    }, _scopes, ns)
+    }, this._scopes, ns)
+
+    return this
   },
 
-  attach: function(moduleName, namespace) {
-    var fun, args = slice(arguments), i = 0
-    fun = function() { _registry[moduleName].apply(this, args.slice(2)) }
-    dbug(moduleName, "attached to " + namespace)
+  _registry: {},
+  register: function register(name, obj) {
+    dbug(name, "registered")
+    if (this._registry[name]) {
+      throw new Error("Module already exists: " + name)
+    }
+    this._registry[name] = obj
+    return this
+  },
+
+  _attachments: {},
+  attach: function(moduleName, ns) {
+    var args = slice(arguments),
+        registry = this._registry,
+        attachments = this._attachments,
+        fun = function() {
+          registry[moduleName].apply(this, args.slice(2))
+        }
+
+    dbug(moduleName, "attached to " + ns)
     //We're delegating off the window, so there's no need to reattach for
     //multiple instances of a single given module.
-    if (_attachments[moduleName+namespace]) { return false }
-    if (!_registry[moduleName]) {
-      log("Module not found: " + moduleName, "warn")
-      return false
+    if (attachments[moduleName + ns]) { return false }
+    if (!registry[moduleName]) {
+      return !!log("Module not found: " + moduleName, "warn")
     }
-    var mod = bindToScope(fun, {
-      namespace:namespace,
-      name:moduleName
-    }, _attachments, moduleName+namespace)
+
+    bindToScope(fun, {
+      name: moduleName,
+      namespace: ns
+    }, attachments, moduleName + ns)
     return true
   }
-
 }
 
-var Scope = {
-
+Eve.extend({
   listen: function(selector, event, handler) {
+    var ns, scope
 
-    //There's a special hell for putting optional parameters at the
-    //beginning.  A special and awesome hell.
     if (!handler) {
       handler = event
       event = selector
-      selector = ''
+      selector = ""
     }
-    selector = selector || ''
+    selector || (selector = "")
 
-    //If listen is happening in the context of a triggered event handler,
-    //we only want to delegate to the current event namespace.
-    var scope = (this.event) ? this.find() : document.body
-
-    var name = this.name,
-      sel = (this.namespace + ' '+selector).trim(),
-      obj = { }
-      for (var k in this) if (this.hasOwnProperty(k)) { obj[k] = this[k] }
-      function fun(e,t) {
-        dbug(name, sel+':'+event)
-        obj.event = e
-        if (using("MooTools")) { e.target = t }
-        if (using("jQuery"))   { e.target = e.currentTarget }
-        if (using("dojo"))     { e.target = e.explicitOriginalTarget }
-        handler.apply(obj, arguments)
-      }
-
-    //JavaScript framework development is so much easier when you let some
-    //other framework do most of the work.
-    if (using("jQuery")) {
-      $(scope).delegate(sel, event, fun)
-    } else if (using('MooTools')) {
-      //I really hate the MooTools event delegation syntax.
-      $(scope).addEvent(event+':relay('+sel+')', fun)
-    } else if (using("YUI")) {
-      _dom(scope).delegate(event, fun, sel)
-    } else if (using("Prototype")) {
-      $(scope).on(event, sel, fun)
-    } else if (using("dojo")) {
-      require(["dojo/on"], function(on){
-        on(scope, sel+':'+event, fun)
-      })
+    // if this didn't mixin Scope
+    if (this.namespace == null) {
+      ns = selector
+      scope = buildScope({name: ns, namespace: ns})
+    } else {
+      ns = this.namespace + ' ' + selector
+      scope = this
     }
 
+    scope.on(event, selector, function(event) {
+      dbug(scope.name, ns + ':' + event)
+      handler.call(scope, event)
+    })
+
+    return this
   },
 
-  find: function(sel) {
-    var scope, ns = this.namespace
-    if (!sel || typeof(sel)=='string') { sel = (sel || '').trim() }
-    //Scope to the particular instance of the DOM module active in this
-    //event.
-    var t  = (this.event) ? this.event.target : document.body
-    if (using('jQuery')) { t = jQuery(t) }
-    if (_dom) { t = _dom(t) }
-    var map = {
-      jQuery: ['is', 'parents', 'find'],
-      MooTools: ['match', 'getParent', 'getElements'],
-      Prototype: ['match', 'up', 'select'],
-      YUI: ['test', 'ancestor', 'all'],
-      dojo: ['', 'closest', 'query']
-    }
-    for (var fw in map) {
-      if (!using(fw)) continue
-      var m = map[fw], match = m[0], up = m[1], all = m[2]
-      if (!using('dojo')&&t[match](ns)) { return t }
-      scope  = (this.event) ? t[up](ns) : t
-      return (this.event) ? scope[all](sel) : scope[all](ns+' '+sel)
-    }
-  },
-  
-  first: function(sel,result) {
-    result = (arguments.length == 2) ? result : this.find(sel)
-    if (using('YUI')) { result = result.getDOMNodes() }
-    return result[0]
-  },
-
-  //Yo dawg...
   scope: function(ns, fun) {
     Eve.scope(this.namespace + ' ' + ns, fun)
+    return this
   },
 
   attach: function(moduleName, ns) {
-    Eve.attach(moduleName, this.namespace + ' ' + (ns || ''))
+    return Eve.attach(moduleName, this.namespace + ' ' + (ns || ''))
   }
-  
-}
+})
 
 })()
