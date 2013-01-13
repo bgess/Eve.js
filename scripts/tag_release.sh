@@ -11,7 +11,7 @@
 # Assuming you don't have any bugs in your code, this file will perform the
 # following actions:
 #
-#     1. Run the unit test suite against src/eve.js
+#     1. Run the unit test suite against eve.js
 #     2. Compress eve.js with copyright notice using Google Closure Compiler
 #     3. Re-run the unit test suite against the minified JavaScript file
 #     4. Change package.json to reflect new version number
@@ -76,7 +76,7 @@ echo "Run 'git stash pop' to restore if something goes wrong."
 git stash --keep-index -q
 
 # Run our tests against the main eve.js file and ensure that they've passed.
-echo "Running tests against src/eve.js..."
+echo "Running tests against eve.js..."
 ./scripts/test.sh
 check_status
 
@@ -90,7 +90,7 @@ TOUCHED=1
 # Write the version number to the top of our new eve.min.js
 echo // $VERSION_STRING >> eve.min.js
 
-./scripts/compile.sh src/eve.js eve.min.js
+./scripts/compile.sh eve.js eve.min.js
 
 # Run the unit tests again against the minified version.
 echo "Running tests against minifed version..."
@@ -99,7 +99,7 @@ check_status
 
 # We're done testing, so we can write the version number to the main eve.js
 # file and to package.json.
-sed -i "" "2s/.*/ * $VERSION_STRING/" src/eve.js 
+sed -i "" "2s/.*/ * $VERSION_STRING/" eve.js 
 sed -i "" "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" package.json
 
 # PARTY TIME. \o/
@@ -108,7 +108,7 @@ echo "Build succeeded."
 echo "Commiting to Git."
 
 # Add the new eve.min.js file and package.json to the repository.
-git add eve.min.js package.json src/eve.js
+git add eve.min.js package.json eve.js
 git commit -m "Build of version $VERSION"
 
 # Merge master to stable (since we've run all our tests)

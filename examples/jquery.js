@@ -6,7 +6,6 @@ Eve.register('rot13', function(ns) {
       var charCode = (c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26
       return String.fromCharCode(charCode)
     }))
-
   }
 
   //debugger
@@ -14,7 +13,6 @@ Eve.register('rot13', function(ns) {
 
 }).register('active', function(ns) { 
 
-  debugger
   this.listen('li', 'click', function(e) {
     this.find('.active').removeClass('active')
     this.find(e.currentTarget).addClass('active')
@@ -41,4 +39,6 @@ Eve.register('rot13', function(ns) {
 })
 
 Eve.attach('active', '.list-module ul')
+window.scope1 = $(".other-module")
 Eve.attach('rot13',  '.list-module')
+window.scope2 = $(".other-module")

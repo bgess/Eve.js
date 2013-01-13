@@ -99,11 +99,8 @@ window.Eve = Eve = {
 
   _extensions: {},
   extend: function(key, fun) {
-    var k, hasOwn = Object.prototype.hasOwnProperty
-    if (Object(key) === key) {
-      for (k in key) if (hasOwn.call(key, k)) {
-        Eve.extend(k, key[k])
-      }
+    if ($.isPlainObject(key)) {
+      this._extensions = $.extend(this._extensions, key)
     } else {
       this._extensions[key] = fun
     }
@@ -179,6 +176,7 @@ Eve.extend({
       scope = this
     }
 
+    if (scope.namespace === ".other-module") { window.scope = scope }
     scope.on(event, selector, function(event) {
       dbug(scope.name, ns + ':' + event)
       handler.call(scope, event)
