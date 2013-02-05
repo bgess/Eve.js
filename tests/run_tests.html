@@ -3,6 +3,7 @@
 <head>
 	<title>Eve.JS Test Runner</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link rel="stylesheet" href="http://code.jquery.com/qunit/qunit-git.css" />
 </head>
 <body>
 
@@ -161,10 +162,10 @@
 			<h1><a href="http://evejs.com">Eve.js Test Runner</a></h1>
 			<ul id="framework-list">
 				<li id="fw-jquery"><a href="?runner=jquery">jQuery</a></li>
-				<li id="fw-mootools"><a href="?runner=mootools">MooTools</a></li>
-				<li id="fw-prototype"><a href="?runner=prototype">Prototype</a></li>
-				<li id="fw-dojo"><a href="?runner=dojo">Dojo</a></li>
-				<li id="fw-yui"><a href="?runner=yui">YUI</a></li>
+				<!--<li id="fw-mootools"><a href="?runner=mootools">MooTools</a></li>-->
+				<!--<li id="fw-prototype"><a href="?runner=prototype">Prototype</a></li>-->
+				<!--<li id="fw-dojo"><a href="?runner=dojo">Dojo</a></li>-->
+				<!--<li id="fw-yui"><a href="?runner=yui">YUI</a></li>-->
 			</ul>
 		</navigation>
 		<a id="run-all" href="?auto=on">autorun</a>
@@ -290,7 +291,10 @@
 		
 	</div>
 	
-	<script type="text/javascript" src="test_client.js"></script>
-	
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js" type="text/javascript"></script>
+	<script src="../src/eve.js" type="text/javascript"></script>
+  <script src="../examples/jquery.js" type="text/javascript"></script>
+  <script src="http://code.jquery.com/qunit/qunit-1.10.0.js" type="text/javascript"></script>
+  <script src="tests.js" type="text/javascript"></script>
 </body>
 </html>
