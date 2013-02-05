@@ -49,12 +49,15 @@ function log(message, method) {
   window.console[method || "log"](message)
 }
 
-function bindToScope(fn, obj, reg, name) {
+function createScope(obj) {
+  if (obj == null) { obj = {} }
   for (var k in Scope) { obj[k] = Scope[k] }
-
   for (k in _extensions) { obj[k] = _extensions[k] }
+  return obj
+}
 
-  reg[name] = fn.apply(obj)
+function bindToScope(fn, obj, reg, name) {
+  reg[name] = fn.apply(createScope(obj))
 }
 
 //The primary Eve API.
@@ -135,11 +138,30 @@ var Scope = {
     return jQuery.fn.find.apply(this, arguments)
   },
 
-  first: function(sel) {
-    if (!arguments.length) {
-      return jQuery.fn.first.apply(this)
+  on: function(events, selector, data, fn) {
+    var self = this
+    if (data == null && fn == null) {
+      // ( types, fn )
+      fn = selector
+      data = selector = undefined
+    } else if (fn == null) {
+      if (typeof selector === "string") {
+        // ( types, selector, fn )
+        fn = data
+        data = undefined
+      } else {
+        // ( types, data, fn )
+        fn = data
+        data = selector
+        selector = undefined
+      }
     }
+    jQuery.fn.on.call(self, events, selector, data, function (event) {
+      fn.call(createScope($(event.target).parents(self.namespace)), event)
+    })
+  },
 
+  first: function(sel) {
     return this.find(sel).eq(0)
   }
 };
