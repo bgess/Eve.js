@@ -1,44 +1,53 @@
-Eve.register('rot13', function(ns) {
+Eve.register('rot13', function(ns) { 
 
   function rot13(e) {
-    var el = $(e.currentTarget)
+    var el = $(e.target);
     el.text(el.text().replace(/[a-zA-Z]/g, function(c) {
-      var charCode = (c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26
-      return String.fromCharCode(charCode)
-    }))
-  }
+      return String.fromCharCode((c <= "Z" ? 90 : 122) >= (c = c.charCodeAt(0) + 13) ? c : c - 26);
+    }));
+  };
 
-  //debugger
-  this.listen('ul li', 'mouseover', rot13).listen('ul li', 'mouseout', rot13)
+  //The event simulation code isn't happy with jQuery's mouseenter/leave.
+  this.on('mouseover', 'ul li', rot13);
+  this.on('mouseout', 'ul li', rot13);
 
-}).register('active', function(ns) { 
+});
 
-  this.listen('li', 'click', function(e) {
-    this.find('.active').removeClass('active')
-    this.find(e.currentTarget).addClass('active')
-  })
+Eve.register('active', function(ns) { 
 
-}).scope('.other-module', function() {
+  this.on('click', 'li', function(e) {
+    this.find('.active').removeClass('active');
+    this.find(e.target).addClass('active');
+  });
 
-  this.listen('ul', 'click', function(e) {
-    console.log("Inner module click!")
-  }).attach('rot13')
+});
 
-}).scope("#outer_scope", function() {
+Eve.attach('active', '.list-module ul');
+Eve.attach('rot13',  '.list-module');
+
+Eve.scope('.other-module', function() {
+  this.on('click', 'ul', function(e) {
+    console.log("Inner module click!");
+  });
+  this.attach('rot13');
+});
+
+Eve.scope("#outer_scope", function() {
 
   this.scope('.inner_scope', function() {
-    this.listen('a', 'click', function(e) {
-      $(e.currentTarget).addClass('affected')
-    }).scope('#another_scope', function() {
-      this.listen('span', 'click', function(e) {
-        $(e.currentTarget).addClass('affected')
-      })
-    })
-  })
 
-})
+    this.on('click', 'a', function(e) {
+      $(e.target).addClass('affected');
+    });
 
-Eve.attach('active', '.list-module ul')
-window.scope1 = $(".other-module")
-Eve.attach('rot13',  '.list-module')
-window.scope2 = $(".other-module")
+    this.scope('#another_scope', function() {
+
+      this.on('click', 'span', function(e) {
+        $(e.target).addClass('affected');
+      });
+
+    });
+
+  });
+
+});
