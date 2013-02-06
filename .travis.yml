@@ -1,7 +1,8 @@
 before_script:
-  - "export DISPLAY=:99.0" 
-  - "sh -e /etc/init.d/xvfb start"
-script: ./scripts/test.sh
+  #- "export DISPLAY=:99.0" 
+  #- "sh -e /etc/init.d/xvfb start"
+  - "npm install"
+script: make test
 notifications:
   email: false
-  irc: "irc.freenode.org#eve.js"
+  #irc: "irc.freenode.org#eve.js"
