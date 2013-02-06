@@ -1,6 +1,6 @@
 # jQuery.Eve.js
 
-<!--[![Build Status](https://secure.travis-ci.org/Yuffster/Eve.js.png)](http://travis-ci.org/Yuffster/Eve.js)-->
+[![Build Status](https://travis-ci.org/bolasblack/jQuery.Eve.js.png?branch=master)](https://travis-ci.org/bolasblack/jQuery.Eve.js)
 
 A &lt;3kb JavaScript file forked from [Eve.js](http://evejs.com) providing three simple methods to organize code into CSS namespaces which magically restrict code to the current context, allowing for dramatic reductions to code size and development time. 
 
